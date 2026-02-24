@@ -5,6 +5,7 @@
 *.zip
 *.pyc
 *.csv
+*.bak
 *.bin
 index.json
 data/.DS_Store

@@ -245,20 +245,20 @@ torch.save(faraday_model_1, "faraday_model_1.pt")
 def generate_synthetic_samples(model, n_samples, dm):
     gmm_samples = model.sample_gmm(n_samples)
     gmm_samples_reconstructed = dm.reconstruct_kwh(gmm_samples["kwh"])
-    gmm_samples_reconstructed = torch.clip(gmm_samples_reconstructed, min=0)
+    gmm_samples_reconstructed = torch.clip(gmm_samples_reconstructed, min=0, max=10_000)
     return gmm_samples_reconstructed
 
 
 # %%
 # gmm_1500 = generate_synthetic_samples(faraday_model_1500, 20000, dm)
-gmm_150 = generate_synthetic_samples(faraday_model_150, 20000, dm)
-gmm_50 = generate_synthetic_samples(faraday_model_50, 20000, dm)
-gmm_10 = generate_synthetic_samples(faraday_model_10, n_samples=20000, dm=dm)
+gmm_150 = generate_synthetic_samples(faraday_model_150, 20000, pulse_data_module)
+gmm_50 = generate_synthetic_samples(faraday_model_50, 20000, pulse_data_module)
+gmm_10 = generate_synthetic_samples(faraday_model_10, n_samples=20000, pulse_data_module)
 # gmm_1 = generate_synthetic_samples(faraday_model_1, 20000, dm)
 
 # %%
-real_kwh = dm.reconstruct_kwh(
-    next(iter(gmm_data_module.train_dataloader()))["kwh"]
+real_kwh = pulse_data_module.reconstruct_kwh(
+    next(iter(pulse_data_module.train_dataloader()))["kwh"]
 )
 real_kwh = torch.clip(
     real_kwh, min=0
@@ -299,6 +299,7 @@ def plot_stats(real_kwh, gmm_reconstruct):
     ax3.legend()
 
     fig.text(0.1, 0.5, "kWh", va="center", rotation="vertical")
+    plt.savefig("pulse_gmm_150.png", bbox_inches="tight")
 
 
 # %%

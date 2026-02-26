@@ -217,7 +217,7 @@ class FaradayModel:
         """
         return self.vae_module.feature_list
 
-    def train_gmm(self, dm: Union[StreamDataModule, LCLDataModule]):
+    def train_gmm(self, dm: Union[StreamDataModule, LCLDataModule], device="cpu"):
         """
         Train Gaussian Mixture Module
 
@@ -278,7 +278,7 @@ class FaradayModel:
         )
         trainer = pl.Trainer(
             max_epochs=self.max_epochs,
-            accelerator="cpu",
+            accelerator=device,
             deterministic=True,
         )
         trainer.fit(gmm_lightning_module, dl)

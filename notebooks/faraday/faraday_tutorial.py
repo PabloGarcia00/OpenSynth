@@ -119,26 +119,25 @@ model = FaradayVAE(
 # Suggest training on CPU with small batch size
 # And potentially experiment with best hyperparameters on large batch size before using 'mps'
 
-trainer = pl.Trainer(max_epochs=150, accelerator="auto")
-trainer.fit(model, dm_with_outliers)
-
-# %%
 import torch
+if Path("vae_pulse_model.pt").exists():
+    model = torch.load("vae_pulse_model.pt", weights_only=False)
+else:
+    trainer = pl.Trainer(max_epochs=150, accelerator="gpu")
+    trainer.fit(model, dm_with_outliers)
 
-torch.save(model, "vae_model.pt")
 
 # %% [markdown]
 # # 🕸️ GMM Module
 
 import numpy as np
-import torch
 
 # %%
 from opensynth.models.faraday.model import FaradayModel
 
 # %%
 # torch.save(model, "faraday_model.pt")
-model = torch.load("vae_model.pt", weights_only=False)
+# model = torch.load("vae_model.pt", weights_only=False)
 
 # %% [markdown]
 # Need to update model s.t. `feature_list` is saved if want to load model from checkpoint. For now, use trained VAE.
@@ -196,23 +195,18 @@ faraday_model_1 = FaradayModel(
 )
 
 # %%
-gmm_data_module = LCLDataModule(
-    data_path=data_path,
-    stats_path=stats_path,
-    batch_size=batch_size_gmm,
-    n_samples=n_samples_gmm,
-    outlier_path=outlier_path,
-)
-gmm_data_module.setup()
+
+pulse_data_module = PulseDataModule(prepped_path, batch_size=200)
+pulse_data_module.setup()
 
 # %%
-faraday_model_10.train_gmm(dm=gmm_data_module)
+faraday_model_10.train_gmm(dm=pulse_data_module)
 
 # %%
-faraday_model_50.train_gmm(dm=gmm_data_module)
+faraday_model_50.train_gmm(dm=pulse_data_module)
 
 # %%
-faraday_model_150.train_gmm(dm=gmm_data_module)
+faraday_model_150.train_gmm(dm=pulse_data_module, device="gpu")
 
 # %%
 # faraday_model_1500.train_gmm(dm=gmm_data_module)
@@ -234,11 +228,11 @@ faraday_model_50_zero_means, faraday_model_150_zero_means
 
 
 # %%
-# torch.save(faraday_model_1500, "faraday_model_1500.pt")
-# torch.save(faraday_model_150, "faraday_model_150.pt")
-# torch.save(faraday_model_50, "faraday_model_50.pt")
-# torch.save(faraday_model_10, "faraday_model_10.pt")
-# torch.save(faraday_model_1, "faraday_model_1.pt")
+torch.save(faraday_model_1500, "faraday_model_1500.pt")
+torch.save(faraday_model_150, "faraday_model_150.pt")
+torch.save(faraday_model_50, "faraday_model_50.pt")
+torch.save(faraday_model_10, "faraday_model_10.pt")
+torch.save(faraday_model_1, "faraday_model_1.pt")
 
 # %% [markdown]
 # # 📈 Comparing Results
@@ -506,7 +500,7 @@ faraday_custom_vae = FaradayVAE(
     custom_decoder=custom_decoder,
 )
 
-custom_trainer = pl.Trainer(max_epochs=250, accelerator="cpu")
+custom_trainer = pl.Trainer(max_epochs=250, accelerator="gpu")
 custom_trainer.fit(faraday_custom_vae, dm)
 
 
